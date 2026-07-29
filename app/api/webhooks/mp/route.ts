@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mpPayment, verifyMpSignature } from "@/lib/mercadopago";
+import { sendPurchaseEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -57,10 +58,29 @@ export async function POST(request: NextRequest) {
   else if (status === "refunded" || status === "charged_back") nuevoStatus = "refunded";
 
   if (nuevoStatus) {
+    // Leemos el estado actual para (a) evitar reprocesar y (b) mandar el email
+    // de compra una sola vez, al pasar a approved.
+    const { data: actual } = await admin
+      .from("purchases")
+      .select("status, user_id, products(slug, titulo)")
+      .eq("id", purchaseId)
+      .maybeSingle();
+
+    const yaAprobada = actual?.status === "approved";
+
     await admin
       .from("purchases")
       .update({ status: nuevoStatus, mp_payment_id: String(payment.id) })
       .eq("id", purchaseId);
+
+    if (nuevoStatus === "approved" && !yaAprobada && actual?.user_id) {
+      const prod = actual.products as { slug?: string; titulo?: string } | null;
+      const { data: userData } = await admin.auth.admin.getUserById(actual.user_id);
+      const email = userData?.user?.email;
+      if (email && prod?.slug && prod?.titulo) {
+        await sendPurchaseEmail(email, prod.titulo, prod.slug);
+      }
+    }
   }
 
   return NextResponse.json({ ok: true });

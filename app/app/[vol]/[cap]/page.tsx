@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getVolumeData, getChapterAnswers } from "@/lib/queries";
+import { getVolumeData, getChapterAnswers, getAllUserAnswers } from "@/lib/queries";
 import { readChapterSource } from "@/lib/content";
 import { isVolSlug } from "@/lib/products";
 import { mdxComponents } from "@/components/mdx";
@@ -51,7 +51,10 @@ export default async function ChapterPage({
     );
   }
 
-  const initialAnswers = await getChapterAnswers(chapter.id);
+  const [initialAnswers, referencias] = await Promise.all([
+    getChapterAnswers(chapter.id),
+    getAllUserAnswers(), // para encadenar datos entre volúmenes
+  ]);
   const completado = data.completedChapterIds.has(chapter.id);
 
   return (
@@ -65,7 +68,11 @@ export default async function ChapterPage({
         </span>
       </div>
 
-      <ChapterProvider chapterId={chapter.id} initialAnswers={initialAnswers}>
+      <ChapterProvider
+        chapterId={chapter.id}
+        initialAnswers={initialAnswers}
+        referencias={referencias}
+      >
         <article className="prosa">
           <MDXRemote source={source} components={mdxComponents} />
         </article>

@@ -59,7 +59,7 @@ deben pasar.
    - `NEXT_PUBLIC_SITE_URL`
 2. En Supabase, correr en orden:
    - `supabase/migrations/0001_init.sql` (esquema + RLS + triggers)
-   - `supabase/seed.sql` (catálogo de products + capítulos del Vol. 1)
+   - `supabase/seed.sql` (catálogo de products + capítulos de los 3 volúmenes)
 3. Configurar el webhook de Mercado Pago apuntando a
    `<SITE_URL>/api/webhooks/mp` y pegar el secret en `MP_WEBHOOK_SECRET`.
 
@@ -72,35 +72,40 @@ app/
   layout.tsx              Root layout (fuentes serif/sans, metadata)
   page.tsx                Landing pública de la serie
   login/ registro/        Auth (Server Actions + formularios)
-  auth/actions.ts         signIn / signUp / magic link / signOut
-  auth/callback/route.ts  Intercambio de code por sesión (email confirm)
+  auth/actions.ts         signIn / signUp / magic link / signOut / reset clave
+  auth/callback/route.ts  Intercambio de code por sesión (email confirm / reset)
+  auth/actualizar-clave/  Setear nueva contraseña (tras el enlace de reset)
+  recuperar/              Pedir enlace de recuperación de contraseña
   app/                    Área protegida (requiere sesión)
     layout.tsx            Header + guard de sesión
-    page.tsx              Dashboard: 3 volúmenes (desbloqueado / candado)
+    page.tsx              Dashboard: 3 volúmenes + banner serie completa
     [vol]/page.tsx        Índice del volumen (capítulos + progreso)
-    [vol]/[cap]/page.tsx  Capítulo: MDX + ejercicios + "completado"
+    [vol]/[cap]/page.tsx  Capítulo: MDX + ejercicios + "completado" (+ referencias)
   compra/retorno/         Página de retorno de MP con polling
   api/
     checkout/route.ts         Crea purchase pending + preferencia MP
     checkout/status/route.ts  Estado de la compra (para el polling)
-    webhooks/mp/route.ts      Webhook MP (valida firma, desbloquea)
+    webhooks/mp/route.ts      Webhook MP (valida firma, desbloquea, email compra)
+    serie-completa/route.ts   ¿Compró los 3? → código de descuento
 components/
   ui/                     Botones y primitivas
-  auth/AuthForm.tsx       Form de login/registro (useFormState)
+  auth/                   AuthForm + RecuperarForm (useFormState)
   checkout/ComprarButton  Dispara el checkout
   mdx/                    Componentes interactivos (ver §6)
 lib/
   supabase/               client (browser) / server / admin / middleware
   mercadopago.ts          SDK MP + verifyMpSignature
-  queries.ts              Acceso a datos server-side (con chequeo de acceso)
+  email.ts                Resend (no-op sin API key): bienvenida + compra
+  kits.ts                 Config de kits, curso y código de descuento (COMPLETAR)
+  queries.ts              Acceso a datos server-side (chequeo de acceso + encadenado)
   content.ts              Lee el MDX del capítulo desde /content
-  rate-limit.ts           Rate limiter en memoria (login/registro)
+  rate-limit.ts           Rate limiter en memoria (login/registro/reset)
   products.ts types.ts clsx.ts
 content/
-  vol1/*.mdx              Capítulos del Vol. 1 (el slug = nombre de archivo)
+  vol1/*.mdx  vol2/*.mdx  vol3/*.mdx   Capítulos (slug = nombre de archivo)
 supabase/
   migrations/0001_init.sql
-  seed.sql
+  seed.sql                             Catálogo + capítulos de los 3 volúmenes
 middleware.ts             Refresca sesión + protege /app
 ```
 
@@ -116,16 +121,27 @@ Viven en `components/mdx/` y se exponen a los capítulos vía
 - `<Callout tipo="idea|ojo|tip">` — cajas de idea fuerza (borde coral).
 - `<Ejercicio titulo>` — contenedor con estado guardado/pendiente.
 - `<CampoTexto>`, `<CampoNumero>`, `<ListaCampos>` — inputs que persisten.
-- `<CalculadoraTMV>` — Vol 1 cap 2: 8 pasos, calcula la TMV en vivo (clave `tmv`).
+- `<CalculadoraTMV>` — Vol 1 cap 2: 8 pasos, fórmula real del ebook (clave `tmv`).
 - `<TablaPaquetes>` — Vol 1 cap 5: 3 paquetes (básico ×1,8 / ×3).
-- `<Semaforo>` — Vol 2 cap 5: 6 áreas verde/amarillo/rojo.
-- `<Tablero5Metricas>` — Vol 2 cap 4: métricas con zona sana/alerta.
-- `<MatrizMix>` — Vol 2 cap 6: puntuar modelos 1-5, muestra el ganador.
-- `<Checklist>` — Vol 3 cap 5 (contrato) y checklist de brief.
+- `<Canvas9>` — Vol 2 cap 2: los 9 casilleros del Canvas de Influencia.
+- `<Radiografia6Meses>` — Vol 2 cap 3: tabla financiera de 6 meses; calcula
+  promedio, volatilidad y sueldo (persiste `promedio`/`sueldo` para encadenar).
+- `<Tablero5Metricas>` — Vol 2 cap 4: métricas con zona sana/alerta (acepta
+  `metricas` con `umbral` + `peor: 'alto'|'bajo'`).
+- `<Semaforo>` — Vol 2 cap 5: áreas verde/amarillo/rojo (acepta `areas`).
+- `<MatrizMix>` — Vol 2 cap 6: puntuar modelos 1-5 (acepta `modelos`/`criterios`).
+- `<Checklist>` — Vol 3 (contrato, brief, guiones): ítems chequeables.
+- `<Referencia>` — muestra (read-only) un valor de otro capítulo/volumen
+  (encadenado). `path` con notación de puntos, ej: `pasos.costosFijos`.
+- `<DescargaKit vol>` — botón de descarga del kit del volumen (link en `lib/kits.ts`).
+- `<SerieCompletaCTA>` — CTA final: revela el código de descuento al curso si el
+  usuario compró los 3 volúmenes (vía `/api/serie-completa`).
 - `<BarraProgreso>` — progreso del volumen (presentacional).
 
-**Cada ejercicio necesita un `exerciseKey` único dentro del capítulo.** Para
-encadenar entre volúmenes (Fase 2), usar claves estables y globales (ej: `tmv`).
+**Cada ejercicio necesita un `exerciseKey` GLOBALMENTE único** (ej: `tmv`,
+`v2-declaracion`, `v3-brief-check`). El encadenado lee todas las respuestas del
+usuario por clave (`getAllUserAnswers` → `referencias` en `ChapterProvider` →
+`useReferencia` / `<Referencia>`); si dos ejercicios comparten clave, se pisan.
 
 ### Agregar un capítulo
 
@@ -169,16 +185,32 @@ encadenar entre volúmenes (Fase 2), usar claves estables y globales (ej: `tmv`)
 
 ## 9. Fases (roadmap)
 
-- **Fase 1 — Núcleo vendible (EN CURSO / implementado):** auth + modelo de datos
-  + checkout MP + webhook + Vol 1 interactivo + candados de Vol 2/3 con compra.
-  *Con esto se lanza.*
-  - Pendiente de Fase 1: migrar el **contenido real del Vol 1** desde el `.docx`
-    (hoy hay placeholders marcados `COMPLETAR FLOR`) y **confirmar precios** en
-    `supabase/seed.sql` y la **fórmula exacta de la TMV** en `CalculadoraTMV.tsx`.
-- **Fase 2:** Vol 2 y Vol 3 migrados + encadenado de datos entre volúmenes +
-  progreso completo.
-- **Fase 3:** emails transaccionales (Resend), descarga del kit por volumen,
-  código de descuento serie completa → curso.
+- **Fase 1 — Núcleo vendible ✅ implementada:** auth + modelo de datos + checkout
+  MP + webhook + candados con compra. Vol 1 completo (10 capítulos reales).
+- **Fase 2 — ✅ implementada:** Vol 2 (9 caps) y Vol 3 (9 caps) migrados desde los
+  `.docx`, encadenado de datos entre volúmenes (`<Referencia>`) y progreso.
+- **Fase 3 — ✅ implementada:** emails transaccionales con Resend (bienvenida en
+  signup, compra en webhook), recuperación de contraseña (`/recuperar` +
+  `/auth/actualizar-clave`), descarga de kit por volumen (`<DescargaKit>`) y
+  código de descuento serie completa → curso (`<SerieCompletaCTA>` + banner en
+  dashboard).
+
+### Pendientes `COMPLETAR FLOR` (datos de negocio, no de código)
+
+El código está; faltan valores reales que solo Flor puede definir:
+
+- **Precios** de cada volumen en `supabase/seed.sql` (hoy placeholder).
+- **Tablas del Vol 1 cap 3**: pesos % del presupuesto y rangos de mercado (en el
+  MDX `content/vol1/presupuesto-marca.mdx`).
+- **Porcentajes del Vol 1 cap 6**: exclusividad, usos, whitelisting
+  (`content/vol1/lo-que-nadie-cobra.mdx`).
+- **Links de kits**, **link del curso** y **código de descuento** en `lib/kits.ts`.
+- **Modelo de acuerdo simple** del Vol 3 cap 5 (revisado por abogado antes de
+  publicar) y decisión sobre la guía de facturación del Vol 3 cap 6.
+- **`RESEND_API_KEY` + dominio** verificado para que los emails salgan de verdad
+  (sin key, `lib/email.ts` es no-op y no rompe nada).
+
+Buscá `COMPLETAR FLOR` en el repo para el listado completo en contexto.
 
 ### No hacer (por ahora)
 

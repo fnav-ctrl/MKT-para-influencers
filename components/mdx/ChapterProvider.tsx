@@ -19,6 +19,8 @@ interface ChapterCtx {
   getAnswers: (exerciseKey: string) => Answers;
   save: (exerciseKey: string, answers: Answers) => void;
   saveState: SaveState;
+  // Respuestas de OTROS capítulos/volúmenes, para encadenar datos (read-only).
+  referencias: Record<string, Answers>;
 }
 
 const Ctx = createContext<ChapterCtx | null>(null);
@@ -28,10 +30,12 @@ const DEBOUNCE_MS = 800;
 export function ChapterProvider({
   chapterId,
   initialAnswers,
+  referencias = {},
   children,
 }: {
   chapterId: string;
   initialAnswers: Record<string, Answers>;
+  referencias?: Record<string, Answers>;
   children: React.ReactNode;
 }) {
   const supabase = useMemo(() => createClient(), []);
@@ -89,8 +93,8 @@ export function ChapterProvider({
   }, []);
 
   const value = useMemo(
-    () => ({ chapterId, getAnswers, save, saveState }),
-    [chapterId, getAnswers, save, saveState],
+    () => ({ chapterId, getAnswers, save, saveState, referencias }),
+    [chapterId, getAnswers, save, saveState, referencias],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
@@ -102,6 +106,12 @@ export function useChapter() {
     throw new Error("useChapter debe usarse dentro de <ChapterProvider>");
   }
   return ctx;
+}
+
+// Lee una respuesta de otro capítulo/volumen (read-only). Devuelve {} si no hay.
+export function useReferencia(exerciseKey: string): Record<string, unknown> {
+  const { referencias } = useChapter();
+  return referencias[exerciseKey] ?? {};
 }
 
 // Hook por ejercicio: mantiene estado local y persiste con debounce.

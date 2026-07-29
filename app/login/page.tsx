@@ -28,6 +28,12 @@ export default async function LoginPage({
 
       <AuthForm action={signIn} cta="Ingresar" mode="login" next={searchParams.next} />
 
+      <p className="mt-4 text-center text-sm">
+        <Link href="/recuperar" className="text-tinta/50 hover:text-tinta">
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </p>
+
       <p className="mt-6 text-center text-sm text-tinta/60">
         ¿Todavía no tenés cuenta?{" "}
         <Link href="/registro" className="font-semibold text-coral-600">

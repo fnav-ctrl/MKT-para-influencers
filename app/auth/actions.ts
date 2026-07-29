@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendWelcomeEmail } from "@/lib/email";
 
 function clientIp(): string {
   const h = headers();
@@ -84,10 +85,66 @@ export async function signUp(
     return { error: "No pudimos crear la cuenta. ¿Ya estás registrada?" };
   }
 
+  // Email de bienvenida (no bloqueante; no-op si no hay RESEND_API_KEY).
+  await sendWelcomeEmail(parsed.data.email, parsed.data.nombre);
+
   return {
     message:
       "Te enviamos un email para confirmar tu cuenta. Revisá tu bandeja (y el spam).",
   };
+}
+
+// --- Recuperación de contraseña ---
+
+export async function requestPasswordReset(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const rl = rateLimit(`reset:${clientIp()}`, { limit: 5, windowSec: 60 });
+  if (!rl.ok) {
+    return { error: `Demasiados intentos. Probá de nuevo en ${rl.retryAfterSec}s.` };
+  }
+
+  const email = z.string().email().safeParse(formData.get("email"));
+  if (!email.success) return { error: "Email inválido" };
+
+  const supabase = createClient();
+  const origin = headers().get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL;
+  await supabase.auth.resetPasswordForEmail(email.data, {
+    redirectTo: `${origin}/auth/callback?next=/auth/actualizar-clave`,
+  });
+
+  // Respuesta neutra: no revelamos si el email existe.
+  return {
+    message:
+      "Si ese email tiene una cuenta, te enviamos un enlace para restablecer la contraseña.",
+  };
+}
+
+export async function updatePassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const password = z
+    .string()
+    .min(8, "La contraseña debe tener al menos 8 caracteres")
+    .safeParse(formData.get("password"));
+  if (!password.success) {
+    return { error: password.error.errors[0]?.message ?? "Contraseña inválida" };
+  }
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "El enlace expiró. Pedí uno nuevo." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: password.data });
+  if (error) return { error: "No pudimos actualizar la contraseña." };
+
+  redirect("/app");
 }
 
 export async function signInWithMagicLink(

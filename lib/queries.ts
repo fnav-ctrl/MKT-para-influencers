@@ -117,3 +117,26 @@ export async function getChapterAnswers(
   }
   return map;
 }
+
+// TODAS las respuestas del usuario, indexadas por exercise_key (globalmente
+// únicos). Se usa para encadenar datos entre volúmenes (regla de oro).
+// RLS asegura que solo devuelve las del usuario.
+export async function getAllUserAnswers(): Promise<
+  Record<string, Record<string, unknown>>
+> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return {};
+  const { data } = await supabase
+    .from("exercise_answers")
+    .select("exercise_key, answers, updated_at")
+    .order("updated_at", { ascending: true });
+  const map: Record<string, Record<string, unknown>> = {};
+  // El orden ascendente hace que la más reciente sobrescriba (gana la última).
+  for (const row of data ?? []) {
+    map[row.exercise_key] = row.answers ?? {};
+  }
+  return map;
+}

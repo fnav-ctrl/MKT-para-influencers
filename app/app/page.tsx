@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getProductsWithAccess } from "@/lib/queries";
 import { ComprarButton } from "@/components/checkout/ComprarButton";
+import { SERIE_COMPLETA_CODE, CURSO_URL, CURSO_PRECIO_USD } from "@/lib/kits";
 
 export const metadata: Metadata = { title: "Mis volúmenes" };
 
@@ -10,6 +11,7 @@ const money = (n: number) =>
 
 export default async function DashboardPage() {
   const products = await getProductsWithAccess();
+  const serieCompleta = products.length === 3 && products.every((p) => p.desbloqueado);
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -57,6 +59,38 @@ export default async function DashboardPage() {
           </article>
         ))}
       </div>
+
+      {serieCompleta && (
+        <section className="mt-10 rounded-2xl bg-tinta p-6 text-crema">
+          <p className="font-serif text-sm uppercase tracking-wide text-coral">
+            Serie completa · gracias
+          </p>
+          <h2 className="mt-2 font-serif text-2xl">Tenés los 3 volúmenes.</h2>
+          <p className="mt-2 text-crema/70">
+            Te ganaste tu descuento exclusivo para el curso Monetizá tu Influencia
+            (USD {CURSO_PRECIO_USD}), el método completo en video.
+          </p>
+          {SERIE_COMPLETA_CODE ? (
+            <p className="mt-4 inline-block rounded-lg border border-coral/50 bg-coral/10 px-4 py-2 font-mono text-xl tracking-widest text-coral">
+              {SERIE_COMPLETA_CODE}
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-crema/50">
+              (COMPLETAR FLOR: cargar el código de descuento en lib/kits.ts)
+            </p>
+          )}
+          {CURSO_URL && (
+            <a
+              href={CURSO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-3 inline-flex rounded-full bg-coral px-5 py-2.5 text-sm font-semibold text-white hover:bg-coral-600"
+            >
+              Ir al curso
+            </a>
+          )}
+        </section>
+      )}
     </main>
   );
 }
