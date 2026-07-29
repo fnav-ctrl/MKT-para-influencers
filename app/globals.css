@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-crema text-tinta font-sans antialiased;
+}
+
+/* Tipografía editorial para el contenido de los capítulos (MDX) */
+.prosa {
+  @apply max-w-lectura text-tinta/90 leading-relaxed;
+}
+.prosa h1,
+.prosa h2,
+.prosa h3 {
+  @apply font-serif text-tinta;
+}
+.prosa h1 {
+  @apply text-3xl md:text-4xl mt-2 mb-6 leading-tight;
+}
+.prosa h2 {
+  @apply text-2xl mt-10 mb-4;
+}
+.prosa h3 {
+  @apply text-xl mt-8 mb-3;
+}
+.prosa p {
+  @apply my-4;
+}
+.prosa ul {
+  @apply my-4 list-disc pl-6 space-y-1;
+}
+.prosa ol {
+  @apply my-4 list-decimal pl-6 space-y-1;
+}
+.prosa a {
+  @apply text-coral-600 underline underline-offset-2;
+}
+.prosa strong {
+  @apply font-semibold text-tinta;
+}
+.prosa blockquote {
+  @apply border-l-4 border-coral pl-4 italic my-6 text-tinta/80;
+}
+.prosa hr {
+  @apply my-10 border-tinta/10;
+}
