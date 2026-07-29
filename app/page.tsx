@@ -41,18 +41,18 @@ export default async function LandingPage() {
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 pb-8 pt-12 text-center md:pt-20">
         <p className="mb-4 font-serif text-sm uppercase tracking-[0.2em] text-coral-600">
-          La serie en 3 volúmenes
+          Tu negocio en 3 volúmenes
         </p>
         <h1 className="font-serif text-4xl leading-tight md:text-6xl">
-          Convertí tu influencia en un negocio que cierra números.
+          Convertí tu influencia en un negocio rentable y sostenible.
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-tinta/70">
-          No es un PDF más. Es texto interactivo: hacés los ejercicios adentro,
-          quedan guardados y tu trabajo del Vol. 1 aparece listo en el Vol. 2.
+          No es un PDF más, es un sistema interactivo que te guía paso a paso a
+          vivir de tu influencia.
         </p>
         <div className="mt-8 flex justify-center gap-3">
           <ButtonLink href={user ? "/app" : "/registro"} variant="primary">
-            Empezar ahora
+            Quiero empezar
           </ButtonLink>
           <ButtonLink href="#volumenes" variant="outline">
             Ver los volúmenes
@@ -98,7 +98,7 @@ export default async function LandingPage() {
       </section>
 
       <footer className="border-t border-tinta/10 py-8 text-center text-sm text-tinta/40">
-        Monetizá tu Influencia · Hecho para leerse desde el teléfono.
+        Monetizá tu Influencia · Hecho para tener siempre a mano.
       </footer>
     </main>
   );

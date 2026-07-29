@@ -4,11 +4,14 @@ import { clsx } from "@/lib/clsx";
 export function Callout({
   children,
   tipo = "idea",
+  titulo,
 }: {
   children: React.ReactNode;
   tipo?: "idea" | "ojo" | "tip";
+  titulo?: string;
 }) {
-  const etiqueta = { idea: "Idea fuerza", ojo: "Ojo con esto", tip: "Tip" }[tipo];
+  const etiqueta =
+    titulo ?? { idea: "Idea fuerza", ojo: "Ojo con esto", tip: "Tip" }[tipo];
   return (
     <aside
       className={clsx(
