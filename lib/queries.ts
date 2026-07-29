@@ -118,6 +118,43 @@ export async function getChapterAnswers(
   return map;
 }
 
+// Datos para el "kit" (PDF): capítulos del volumen + las respuestas del usuario
+// en cada uno, en orden. Solo si tiene acceso.
+export interface KitChapter {
+  titulo: string;
+  orden: number;
+  answers: { exercise_key: string; answers: Record<string, unknown> }[];
+}
+export async function getKitData(
+  slug: VolSlug,
+): Promise<{ product: Product; capitulos: KitChapter[] } | null> {
+  const data = await getVolumeData(slug);
+  if (!data) return null;
+
+  const supabase = createClient();
+  const chapterIds = data.chapters.map((c) => c.id);
+  const { data: rows } = await supabase
+    .from("exercise_answers")
+    .select("chapter_id, exercise_key, answers, updated_at")
+    .in("chapter_id", chapterIds)
+    .order("updated_at", { ascending: true });
+
+  const byChapter = new Map<string, { exercise_key: string; answers: Record<string, unknown> }[]>();
+  for (const r of rows ?? []) {
+    const list = byChapter.get(r.chapter_id) ?? [];
+    list.push({ exercise_key: r.exercise_key, answers: r.answers ?? {} });
+    byChapter.set(r.chapter_id, list);
+  }
+
+  const capitulos: KitChapter[] = data.chapters.map((c) => ({
+    titulo: c.titulo,
+    orden: c.orden,
+    answers: byChapter.get(c.id) ?? [],
+  }));
+
+  return { product: data.product, capitulos };
+}
+
 // TODAS las respuestas del usuario, indexadas por exercise_key (globalmente
 // únicos). Se usa para encadenar datos entre volúmenes (regla de oro).
 // RLS asegura que solo devuelve las del usuario.

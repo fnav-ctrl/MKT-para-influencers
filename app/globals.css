@@ -49,3 +49,16 @@ body {
 .prosa hr {
   @apply my-10 border-tinta/10;
 }
+
+/* Impresión del kit (Guardar como PDF) */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
+}

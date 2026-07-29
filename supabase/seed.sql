@@ -5,11 +5,13 @@
 --  volumen los define Flor.)
 -- =============================================================
 
+-- Precio definido por Flor: ARS 69.000 cada volumen.
+-- precio_usd es placeholder → COMPLETAR FLOR si se vende en USD.
 insert into public.products (slug, titulo, precio_ars, precio_usd, orden, activo)
 values
-  ('vol1', 'Vol. 1 · Cuánto Cobrar',              29000, 39, 1, true),
-  ('vol2', 'Vol. 2 · Tu Negocio de Influencia',   29000, 39, 2, true),
-  ('vol3', 'Vol. 3 · Negociá como un Negocio',    29000, 39, 3, true)
+  ('vol1', 'Vol. 1 · Cuánto Cobrar',              69000, 59, 1, true),
+  ('vol2', 'Vol. 2 · Tu Negocio de Influencia',   69000, 59, 2, true),
+  ('vol3', 'Vol. 3 · Negociá como un Negocio',    69000, 59, 3, true)
 on conflict (slug) do update
   set titulo = excluded.titulo,
       precio_ars = excluded.precio_ars,

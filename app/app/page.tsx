@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getProductsWithAccess } from "@/lib/queries";
 import { ComprarButton } from "@/components/checkout/ComprarButton";
+import { comboPriceArs, COMBO_SLUG } from "@/lib/kits";
 
 export const metadata: Metadata = { title: "Mis volúmenes" };
 
@@ -10,6 +11,10 @@ const money = (n: number) =>
 
 export default async function DashboardPage() {
   const products = await getProductsWithAccess();
+  // La promo de la serie aplica si todavía no tenés ningún volumen.
+  const tieneAlguno = products.some((p) => p.desbloqueado);
+  const precioSuelto = products.reduce((a, p) => a + p.precio_ars, 0);
+  const precioCombo = comboPriceArs(products.map((p) => p.precio_ars));
 
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
@@ -57,6 +62,23 @@ export default async function DashboardPage() {
           </article>
         ))}
       </div>
+
+      {!tieneAlguno && products.length === 3 && (
+        <section className="mt-6 flex flex-col items-start gap-4 rounded-2xl bg-tinta p-6 text-crema md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-serif text-sm uppercase tracking-wide text-coral">
+              Serie completa · 10% off
+            </p>
+            <h2 className="mt-1 font-serif text-2xl">Llevate los 3 volúmenes juntos</h2>
+            <p className="mt-1 text-crema/70">
+              <span className="line-through">{money(precioSuelto)}</span>{" "}
+              <span className="font-semibold text-crema">{money(precioCombo)}</span> · te
+              ahorrás un 10%.
+            </p>
+          </div>
+          <ComprarButton slug={COMBO_SLUG} label="Comprar la serie" />
+        </section>
+      )}
     </main>
   );
 }

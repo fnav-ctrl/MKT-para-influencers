@@ -14,6 +14,8 @@ import { Radiografia6Meses } from "./Radiografia6Meses";
 import { Referencia } from "./Referencia";
 import { DescargaKit } from "./DescargaKit";
 import { SerieCompletaCTA } from "./SerieCompletaCTA";
+import { PlanillaPrecios } from "./PlanillaPrecios";
+import { CTAVolumen2 } from "./CTAVolumen2";
 
 // Mapa de componentes disponibles dentro de los capítulos MDX.
 export const mdxComponents: MDXComponents = {
@@ -34,4 +36,6 @@ export const mdxComponents: MDXComponents = {
   Referencia,
   DescargaKit,
   SerieCompletaCTA,
+  PlanillaPrecios,
+  CTAVolumen2,
 };

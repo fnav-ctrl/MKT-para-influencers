@@ -1,25 +1,31 @@
 import type { VolSlug } from "./types";
 
-// Config de entregables y upsell. Los valores marcados COMPLETAR FLOR se cargan
-// cuando estén definidos (links de kits, curso y código de descuento).
+// Config de entregables, planilla, promo y upsell.
 
-// Link de descarga del kit por volumen.
-// COMPLETAR FLOR: reemplazar por las URLs reales (Notion/Drive/página propia).
-export const KIT_URLS: Record<VolSlug, string | null> = {
-  vol1: null, // COMPLETAR FLOR
-  vol2: null, // COMPLETAR FLOR
-  vol3: null, // COMPLETAR FLOR
-};
+// Planilla de precios (Google Sheets, link "hacer una copia").
+// Cada usuario abre su propia copia editable.
+export const PLANILLA_PRECIOS_URL =
+  "https://docs.google.com/spreadsheets/d/1Nnw6AHpyX9lBYV3yGLBBn4_W05ap5l4xoLHsX8M2JT0/template/preview";
+
+// El "kit" del volumen ahora es el PDF con los ejercicios que hizo el usuario:
+// se genera desde /app/<vol>/kit (página imprimible → guardar como PDF).
+export function kitHref(vol: VolSlug): string {
+  return `/app/${vol}/kit`;
+}
+
+// Promo: comprando los 3 volúmenes, 10% off sobre la suma de los precios.
+export const COMBO_DISCOUNT = 0.1; // 10%
+export const COMBO_SLUG = "serie";
+
+export function comboPriceArs(volPricesArs: number[]): number {
+  const total = volPricesArs.reduce((a, b) => a + b, 0);
+  return Math.round(total * (1 - COMBO_DISCOUNT));
+}
 
 // Curso completo (upsell). COMPLETAR FLOR: link real de checkout del curso.
-export const CURSO_URL: string | null = null; // ej: "https://mktparainfluencers.com/curso"
+export const CURSO_URL: string | null = null;
 export const CURSO_PRECIO_USD = 157;
 
-// Código de descuento exclusivo para quienes compraron los 3 volúmenes.
-// COMPLETAR FLOR: definir el código real (y cargarlo también en la plataforma
-// del curso para que sea válido).
-export const SERIE_COMPLETA_CODE: string | null = null; // ej: "SERIE100"
-
-export function kitUrl(vol: VolSlug): string | null {
-  return KIT_URLS[vol] ?? null;
-}
+// Código de descuento para quienes compraron los 3 volúmenes (post-serie → curso).
+// COMPLETAR FLOR: definir el código real.
+export const SERIE_COMPLETA_CODE: string | null = null;
