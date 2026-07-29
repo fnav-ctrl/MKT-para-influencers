@@ -136,6 +136,11 @@ Viven en `components/mdx/` y se exponen a los capítulos vía
 - `<DescargaKit vol>` — botón de descarga del kit del volumen (link en `lib/kits.ts`).
 - `<SerieCompletaCTA>` — CTA final: revela el código de descuento al curso si el
   usuario compró los 3 volúmenes (vía `/api/serie-completa`).
+- `<NovedadesLanzamiento>` — Vol 3 cierre: captura de mail para la lista de espera
+  del lanzamiento del curso (persiste como ejercicio; COMPLETAR FLOR: sincronizar con
+  audiencia de Resend).
+- `<Estrellas>` — Vol 3 cierre: feedback 1-5 estrellas + comentario (persiste como
+  ejercicio; exportar por `exercise_key`).
 - `<BarraProgreso>` — progreso del volumen (presentacional).
 
 **Cada ejercicio necesita un `exerciseKey` GLOBALMENTE único** (ej: `tmv`,

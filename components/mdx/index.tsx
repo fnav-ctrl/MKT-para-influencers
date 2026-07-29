@@ -17,6 +17,8 @@ import { SerieCompletaCTA } from "./SerieCompletaCTA";
 import { PlanillaPrecios } from "./PlanillaPrecios";
 import { CTAVolumen2 } from "./CTAVolumen2";
 import { CTAVolumen3 } from "./CTAVolumen3";
+import { Estrellas } from "./Estrellas";
+import { NovedadesLanzamiento } from "./NovedadesLanzamiento";
 
 // Mapa de componentes disponibles dentro de los capítulos MDX.
 export const mdxComponents: MDXComponents = {
@@ -40,4 +42,6 @@ export const mdxComponents: MDXComponents = {
   PlanillaPrecios,
   CTAVolumen2,
   CTAVolumen3,
+  Estrellas,
+  NovedadesLanzamiento,
 };
