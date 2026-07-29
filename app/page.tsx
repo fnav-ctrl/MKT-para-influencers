@@ -117,7 +117,6 @@ export default async function LandingPage() {
                   </ul>
                 )}
                 <p className="mt-6 font-serif text-3xl text-tinta">{money(p.precio_ars)}</p>
-                <p className="text-sm text-tinta/50">o USD {p.precio_usd}</p>
                 <div className="mt-auto pt-6">
                   <ButtonLink
                     href={user ? "/app" : "/registro"}
